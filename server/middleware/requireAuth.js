@@ -1,7 +1,9 @@
-import { supabase } from '../lib/supabase.js'
+import { supabaseAuth } from '../lib/supabase.js'
 
 /**
  * Middleware: verify Supabase JWT from Authorization header.
+ * Uses the anon-key client — service-role key must NOT be used here
+ * as it bypasses JWT validation and returns the wrong user context.
  * Attaches the authenticated user to req.user.
  */
 export async function requireAuth(req, res, next) {
@@ -12,7 +14,7 @@ export async function requireAuth(req, res, next) {
 
   const token = authHeader.split(' ')[1]
 
-  const { data: { user }, error } = await supabase.auth.getUser(token)
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
 
   if (error || !user) {
     return res.status(401).json({ error: 'Invalid or expired token' })
