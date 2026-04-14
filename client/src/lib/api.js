@@ -1,43 +1,84 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-export async function fetchBooks() {
-  const res = await fetch(`${API_URL}/api/books`)
-  if (!res.ok) throw new Error('Failed to fetch books')
+/**
+ * Core fetch wrapper with error handling.
+ * Extracts error message from JSON response body when available.
+ */
+async function request(path, options = {}) {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  })
+
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`
+    try {
+      const body = await res.json()
+      if (body?.error) message = body.error
+    } catch {}
+    throw new Error(message)
+  }
+
+  // 204 No Content
+  if (res.status === 204) return null
   return res.json()
 }
 
-export async function fetchBookById(id) {
-  const res = await fetch(`${API_URL}/api/books/${id}`)
-  if (!res.ok) throw new Error('Book not found')
-  return res.json()
+/** Attach Bearer token header if token provided */
+function authHeader(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export async function createReservation(data, token) {
-  const res = await fetch(`${API_URL}/api/reservations`, {
+// ─── Books ────────────────────────────────────────────────────────────────────
+
+export function fetchBooks({ genre, search, available } = {}) {
+  const params = new URLSearchParams()
+  if (genre) params.set('genre', genre)
+  if (search) params.set('search', search)
+  if (available !== undefined) params.set('available', available)
+  const qs = params.toString()
+  return request(`/api/books${qs ? `?${qs}` : ''}`)
+}
+
+export function fetchBookById(id) {
+  return request(`/api/books/${id}`)
+}
+
+// ─── Reservations ─────────────────────────────────────────────────────────────
+
+export function createReservation(data, token) {
+  return request('/api/reservations', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
+    headers: authHeader(token),
     body: JSON.stringify(data),
   })
-  if (!res.ok) throw new Error('Failed to create reservation')
-  return res.json()
 }
 
-export async function fetchMyReservations(token) {
-  const res = await fetch(`${API_URL}/api/reservations/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+export function fetchMyReservations(token) {
+  return request('/api/reservations/my', {
+    headers: authHeader(token),
   })
-  if (!res.ok) throw new Error('Failed to fetch reservations')
-  return res.json()
 }
 
-export async function cancelReservation(id, token) {
-  const res = await fetch(`${API_URL}/api/reservations/${id}`, {
+export function cancelReservation(id, token) {
+  return request(`/api/reservations/${id}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   })
-  if (!res.ok) throw new Error('Failed to cancel reservation')
-  return res.json()
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export function fetchAllReservations(token) {
+  return request('/api/reservations/admin', {
+    headers: authHeader(token),
+  })
+}
+
+export function updateBook(id, updates, token) {
+  return request(`/api/books/${id}`, {
+    method: 'PATCH',
+    headers: authHeader(token),
+    body: JSON.stringify(updates),
+  })
 }
