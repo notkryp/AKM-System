@@ -1,5 +1,8 @@
 import { supabase } from '../lib/supabase.js'
 
+// 14-day loan period
+const LOAN_DAYS = 14
+
 export async function createReservation(req, res) {
   const { bookId, name, email, pickupDate } = req.body
 
@@ -13,6 +16,11 @@ export async function createReservation(req, res) {
   if (bookError || !book) return res.status(404).json({ error: 'Book not found' })
   if (!book.available) return res.status(409).json({ error: `"${book.title}" is already reserved` })
 
+  // Calculate due date: pickup + 14 days
+  const pickup = pickupDate ? new Date(pickupDate) : new Date()
+  const dueDate = new Date(pickup)
+  dueDate.setDate(dueDate.getDate() + LOAN_DAYS)
+
   // Create reservation
   const { data, error } = await supabase
     .from('reservations')
@@ -20,15 +28,17 @@ export async function createReservation(req, res) {
       book_id: bookId,
       name,
       email,
-      pickup_date: pickupDate,
+      pickup_date: pickup.toISOString().split('T')[0],
+      due_date: dueDate.toISOString().split('T')[0],
       user_id: req.user?.id ?? null,
+      status: 'active',
     })
     .select('*, book:books(title, author)')
     .single()
 
   if (error) return res.status(500).json({ error: error.message })
 
-  // Mark book unavailable atomically
+  // Mark book unavailable
   await supabase.from('books').update({ available: false }).eq('id', bookId)
 
   res.status(201).json(data)
@@ -71,7 +81,7 @@ export async function deleteReservation(req, res) {
   res.json({ message: 'Reservation cancelled successfully' })
 }
 
-// Admin only
+// Admin only — get all reservations
 export async function getAllReservations(req, res) {
   const { data, error } = await supabase
     .from('reservations')
@@ -79,5 +89,43 @@ export async function getAllReservations(req, res) {
     .order('created_at', { ascending: false })
 
   if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+}
+
+// Admin only — mark a book as returned
+export async function returnReservation(req, res) {
+  const { id } = req.params
+
+  // Find the reservation (any user — admin action)
+  const { data: reservation, error: findError } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (findError || !reservation) {
+    return res.status(404).json({ error: 'Reservation not found' })
+  }
+
+  if (reservation.status === 'returned') {
+    return res.status(409).json({ error: 'Already marked as returned' })
+  }
+
+  // Update reservation status
+  const { data, error } = await supabase
+    .from('reservations')
+    .update({
+      status: 'returned',
+      returned_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('*, book:books(title, author)')
+    .single()
+
+  if (error) return res.status(500).json({ error: error.message })
+
+  // Free the book
+  await supabase.from('books').update({ available: true }).eq('id', reservation.book_id)
+
   res.json(data)
 }
