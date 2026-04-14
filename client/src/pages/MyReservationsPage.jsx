@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
@@ -27,7 +27,7 @@ export default function MyReservationsPage() {
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/reservations/my`, {
         headers: { Authorization: `Bearer ${session?.access_token}` },
@@ -40,12 +40,12 @@ export default function MyReservationsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session?.access_token, addToast])
 
-  useEffect(() => { fetchReservations() }, [])
+  useEffect(() => { fetchReservations() }, [fetchReservations])
 
   const handleCancel = async (id) => {
-    if (!confirm('Cancel this reservation?')) return
+    if (!window.confirm('Cancel this reservation?')) return
     try {
       const res = await fetch(`${API}/api/reservations/${id}`, {
         method: 'DELETE',

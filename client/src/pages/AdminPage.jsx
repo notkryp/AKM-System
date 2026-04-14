@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
@@ -12,30 +12,25 @@ export default function AdminPage() {
   const { session } = useAuth()
   const { addToast } = useToast()
 
-  // Reservations state
   const [reservations, setReservations] = useState([])
   const [resLoading, setResLoading]     = useState(true)
   const [returning, setReturning]       = useState(null)
 
-  // Books state
   const [books, setBooks]               = useState([])
   const [booksLoading, setBooksLoading] = useState(true)
   const [deleting, setDeleting]         = useState(null)
 
-  // Add book modal
   const [showAddModal, setShowAddModal] = useState(false)
   const [form, setForm]                 = useState(EMPTY_BOOK)
   const [adding, setAdding]             = useState(false)
 
-  // Active tab
-  const [tab, setTab] = useState('reservations') // 'reservations' | 'books'
+  const [tab, setTab] = useState('reservations')
 
   const authHeaders = { Authorization: `Bearer ${session?.access_token}` }
 
-  /* ── Reservations ── */
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/api/reservations`, { headers: authHeaders })
+      const res  = await fetch(`${API}/api/reservations`, { headers: { Authorization: `Bearer ${session?.access_token}` } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setReservations(data)
@@ -44,7 +39,7 @@ export default function AdminPage() {
     } finally {
       setResLoading(false)
     }
-  }
+  }, [session?.access_token, addToast])
 
   const handleReturn = async (id) => {
     setReturning(id)
@@ -61,8 +56,7 @@ export default function AdminPage() {
     }
   }
 
-  /* ── Books ── */
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       const res  = await fetch(`${API}/api/books`)
       const data = await res.json()
@@ -73,7 +67,7 @@ export default function AdminPage() {
     } finally {
       setBooksLoading(false)
     }
-  }
+  }, [addToast])
 
   const handleAddBook = async (e) => {
     e.preventDefault()
@@ -100,9 +94,9 @@ export default function AdminPage() {
   const handleDeleteBook = async (book) => {
     const activeRes = reservations.filter(r => r.book_id === book.id && r.status === 'active')
     if (activeRes.length > 0) {
-      if (!confirm(`"${book.title}" has ${activeRes.length} active reservation(s). Delete anyway?`)) return
+      if (!window.confirm(`"${book.title}" has ${activeRes.length} active reservation(s). Delete anyway?`)) return
     } else {
-      if (!confirm(`Delete "${book.title}"? This cannot be undone.`)) return
+      if (!window.confirm(`Delete "${book.title}"? This cannot be undone.`)) return
     }
     setDeleting(book.id)
     try {
@@ -121,12 +115,11 @@ export default function AdminPage() {
   useEffect(() => {
     fetchReservations()
     fetchBooks()
-  }, [])
+  }, [fetchReservations, fetchBooks])
 
   const active   = reservations.filter(r => r.status === 'active')
   const returned = reservations.filter(r => r.status === 'returned')
 
-  /* ── Styles ── */
   const tabStyle = (t) => ({
     padding: 'var(--space-2) var(--space-5)',
     borderRadius: 'var(--radius-full)',
@@ -145,7 +138,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ maxWidth: '960px', margin: '0 auto', padding: 'var(--space-8) var(--space-4)' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)' }}>
         <div>
           <h1 style={{ fontWeight: 700, fontSize: 'var(--text-xl)', marginBottom: 'var(--space-1)' }}>Admin Dashboard</h1>
@@ -170,13 +162,11 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', background: 'var(--color-surface-offset)', borderRadius: 'var(--radius-full)', padding: '3px', width: 'fit-content' }}>
         <button style={tabStyle('reservations')} onClick={() => setTab('reservations')}>Reservations</button>
         <button style={tabStyle('books')} onClick={() => setTab('books')}>Books</button>
       </div>
 
-      {/* ── Reservations tab ── */}
       {tab === 'reservations' && (
         resLoading ? skeletons(4) : (
           <>
@@ -260,7 +250,6 @@ export default function AdminPage() {
         )
       )}
 
-      {/* ── Books tab ── */}
       {tab === 'books' && (
         booksLoading ? skeletons(6, '60px') : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -315,7 +304,6 @@ export default function AdminPage() {
         )
       )}
 
-      {/* ── Add Book Modal ── */}
       {showAddModal && (
         <div style={{
           position: 'fixed', inset: 0,

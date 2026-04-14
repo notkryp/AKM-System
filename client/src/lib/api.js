@@ -1,9 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-/**
- * Core fetch wrapper with error handling.
- * Extracts error message from JSON response body when available.
- */
 async function request(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -15,21 +11,19 @@ async function request(path, options = {}) {
     try {
       const body = await res.json()
       if (body?.error) message = body.error
-    } catch {}
+    } catch (_e) {
+      // Response body is not JSON - use default message
+    }
     throw new Error(message)
   }
 
-  // 204 No Content
   if (res.status === 204) return null
   return res.json()
 }
 
-/** Attach Bearer token header if token provided */
 function authHeader(token) {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
-
-// ─── Books ───────────────────────────────────────────────────────────────────────────────
 
 export function fetchBooks({ genre, search, available } = {}) {
   const params = new URLSearchParams()
@@ -44,8 +38,6 @@ export function fetchBookById(id) {
   return request(`/api/books/${id}`)
 }
 
-// ─── Reservations ───────────────────────────────────────────────────────────────────────
-
 export function createReservation(data, token) {
   return request('/api/reservations', {
     method: 'POST',
@@ -55,9 +47,7 @@ export function createReservation(data, token) {
 }
 
 export function fetchMyReservations(token) {
-  return request('/api/reservations/my', {
-    headers: authHeader(token),
-  })
+  return request('/api/reservations/my', { headers: authHeader(token) })
 }
 
 export function cancelReservation(id, token) {
@@ -67,13 +57,8 @@ export function cancelReservation(id, token) {
   })
 }
 
-// ─── Admin ───────────────────────────────────────────────────────────────────────────────
-
-// GET /api/reservations/ — admin only, returns all reservations
 export function fetchAllReservations(token) {
-  return request('/api/reservations/', {
-    headers: authHeader(token),
-  })
+  return request('/api/reservations/', { headers: authHeader(token) })
 }
 
 export function updateBook(id, updates, token) {

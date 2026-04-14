@@ -21,22 +21,19 @@ app.use(cors({
   credentials: true,
 }))
 
-// Parse JSON bodies — type '*/*' catches any Content-Type so body is never silently dropped
 app.use(express.json({ type: '*/*' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 
-// Routes
 app.use('/api/books', bookRoutes)
 app.use('/api/reservations', reservationRoutes)
 
-// 404 handler
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }))
 
-// Global error handler
+// Express requires 4-param signature for error handlers; next intentionally unused
+// eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error('[Error]', err.message)
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' })
