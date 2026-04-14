@@ -6,6 +6,12 @@ const LOAN_DAYS = 14
 export async function createReservation(req, res) {
   const { bookId, name, email, pickupDate } = req.body
 
+  // Diagnostic: confirm service-role client is initialised
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    console.error('[createReservation] Missing SUPABASE_URL or SUPABASE_SERVICE_KEY env vars')
+    return res.status(500).json({ error: 'Server misconfiguration: missing Supabase credentials' })
+  }
+
   // Check book exists and is available
   const { data: book, error: bookError } = await supabase
     .from('books')
@@ -13,7 +19,10 @@ export async function createReservation(req, res) {
     .eq('id', bookId)
     .single()
 
-  if (bookError || !book) return res.status(404).json({ error: 'Book not found' })
+  if (bookError || !book) {
+    console.error('[createReservation] Book lookup failed:', { bookId, bookError })
+    return res.status(404).json({ error: 'Book not found' })
+  }
   if (!book.available) return res.status(409).json({ error: `"${book.title}" is already reserved` })
 
   // Calculate due date: pickup + 14 days
