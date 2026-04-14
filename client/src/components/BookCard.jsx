@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 export default function BookCard({ book }) {
-  const { id, title, author, genre, available } = book
+  const { id, title, author, genre, available, cover_image } = book
 
   return (
     <div
@@ -41,18 +41,39 @@ export default function BookCard({ book }) {
         )}
       </div>
 
-      {/* Book icon placeholder */}
+      {/* Cover image */}
       <div style={{
-        width: '100%', height: 120,
+        width: '100%', height: 160,
         background: 'var(--color-surface-offset)',
         borderRadius: 'var(--radius-lg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden',
         color: 'var(--color-text-faint)',
       }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        </svg>
+        {cover_image ? (
+          <img
+            src={cover_image}
+            alt={`Cover of ${title}`}
+            width={100}
+            height={160}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-lg)' }}
+            onError={e => {
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.nextSibling.style.display = 'flex'
+            }}
+          />
+        ) : null}
+        <div style={{
+          display: cover_image ? 'none' : 'flex',
+          width: '100%', height: '100%',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </div>
       </div>
 
       {/* Title & author */}
