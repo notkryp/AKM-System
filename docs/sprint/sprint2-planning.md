@@ -1,5 +1,4 @@
 # Sprint 2 Planning
-**Sprint Duration:** Days 4–6  
 **Scrum Master:** Abhishek Pokharel  
 **Team:** Abhishek (UX Lead), Mahmoud (Full-Stack), Kritik (DevOps)
 
