@@ -13,6 +13,7 @@ A full-stack web application for browsing and reserving books.
 | Auth | Supabase Auth |
 | Deployment | Netlify (client) + Render (server) |
 | CI/CD | GitHub Actions |
+| Testing | Playwright E2E + Lighthouse CI |
 
 ## Team
 
@@ -31,11 +32,14 @@ AKM-System/
 │       ├── context/      # React Context (Auth, Toast)
 │       ├── hooks/        # Custom hooks
 │       └── lib/          # Supabase client + API helpers
-└── server/          # Express backend
-    ├── routes/       # API route definitions
-    ├── controllers/  # Route handler logic
-    ├── middleware/   # Auth, error handling
-    └── index.js      # Entry point
+├── server/          # Express backend
+│   ├── routes/       # API route definitions
+│   ├── controllers/  # Route handler logic
+│   ├── middleware/   # Auth, error handling
+│   └── index.js      # Entry point
+└── e2e/             # Playwright end-to-end tests
+    ├── playwright.config.js
+    └── reserve.spec.js
 ```
 
 ## Getting Started
@@ -52,6 +56,12 @@ npm run dev
 cd server
 npm install
 npm run dev
+```
+
+### E2E Tests
+```bash
+npx playwright install chromium
+npx playwright test --config=e2e/playwright.config.js
 ```
 
 ## Environment Variables
