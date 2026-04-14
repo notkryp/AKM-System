@@ -29,7 +29,7 @@ function authHeader(token) {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-// ─── Books ────────────────────────────────────────────────────────────────────
+// ─── Books ───────────────────────────────────────────────────────────────────────────────
 
 export function fetchBooks({ genre, search, available } = {}) {
   const params = new URLSearchParams()
@@ -44,7 +44,7 @@ export function fetchBookById(id) {
   return request(`/api/books/${id}`)
 }
 
-// ─── Reservations ─────────────────────────────────────────────────────────────
+// ─── Reservations ───────────────────────────────────────────────────────────────────────
 
 export function createReservation(data, token) {
   return request('/api/reservations', {
@@ -67,10 +67,11 @@ export function cancelReservation(id, token) {
   })
 }
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
+// ─── Admin ───────────────────────────────────────────────────────────────────────────────
 
+// GET /api/reservations/ — admin only, returns all reservations
 export function fetchAllReservations(token) {
-  return request('/api/reservations/admin', {
+  return request('/api/reservations/', {
     headers: authHeader(token),
   })
 }
