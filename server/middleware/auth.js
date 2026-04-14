@@ -1,19 +1,49 @@
 import { supabase } from '../lib/supabase.js'
 
+/**
+ * requireAuth — verifies the Supabase JWT from Authorization header.
+ * Attaches req.user on success.
+ */
 export async function requireAuth(req, res, next) {
-  const token = req.headers.authorization?.split('Bearer ')[1]
-  if (!token) return res.status(401).json({ error: 'Unauthorised — no token provided' })
+  const authHeader = req.headers.authorization
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid Authorization header' })
+  }
+
+  const token = authHeader.split(' ')[1]
 
   const { data: { user }, error } = await supabase.auth.getUser(token)
-  if (error || !user) return res.status(401).json({ error: 'Unauthorised — invalid token' })
+
+  if (error || !user) {
+    return res.status(401).json({ error: 'Invalid or expired token' })
+  }
 
   req.user = user
   next()
 }
 
+/**
+ * requireAdmin — must be used after requireAuth.
+ * Checks user_metadata.role === 'admin'.
+ */
 export function requireAdmin(req, res, next) {
-  if (req.user?.user_metadata?.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden — admin access only' })
+  const role = req.user?.user_metadata?.role
+  if (role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' })
   }
+  next()
+}
+
+/**
+ * optionalAuth — attaches req.user if token present, but does not block if missing.
+ */
+export async function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return next()
+
+  const token = authHeader.split(' ')[1]
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (user) req.user = user
   next()
 }

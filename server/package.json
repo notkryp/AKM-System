@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "description": "AKM Book Reservation System - Express API",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "lint": "eslint . --ext .js"
+    "lint": "eslint . --ext .js",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
@@ -16,6 +18,11 @@
   },
   "devDependencies": {
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
   }
 }
