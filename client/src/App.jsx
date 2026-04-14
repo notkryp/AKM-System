@@ -1,50 +1,44 @@
-import { Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
-
-// Pages
 import BookListPage from './pages/BookListPage'
 import BookDetailPage from './pages/BookDetailPage'
 import ReservationFormPage from './pages/ReservationFormPage'
 import MyReservationsPage from './pages/MyReservationsPage'
+import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import AdminPage from './pages/AdminPage'
-import NotFoundPage from './pages/NotFoundPage'
 
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Navbar />
-        <main>
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <Navbar />
           <Routes>
-            {/* Public routes */}
+            {/* Public */}
             <Route path="/" element={<BookListPage />} />
             <Route path="/books/:id" element={<BookDetailPage />} />
-            <Route path="/books/:id/reserve" element={<ReservationFormPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
 
-            {/* Protected routes — logged in users only */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/my-reservations" element={<MyReservationsPage />} />
-            </Route>
+            {/* Protected — requires login */}
+            <Route path="/books/:id/reserve" element={
+              <ProtectedRoute><ReservationFormPage /></ProtectedRoute>
+            } />
+            <Route path="/my-reservations" element={
+              <ProtectedRoute><MyReservationsPage /></ProtectedRoute>
+            } />
 
-            {/* Protected routes — admin only */}
-            <Route element={<ProtectedRoute adminOnly />}>
-              <Route path="/admin" element={<AdminPage />} />
-            </Route>
-
-            {/* 404 */}
-            <Route path="*" element={<NotFoundPage />} />
+            {/* Admin only */}
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>
+            } />
           </Routes>
-        </main>
-      </ToastProvider>
-    </AuthProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
-
-export default App
