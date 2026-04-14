@@ -1,37 +1,49 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchBooks } from '../lib/api'
 import BookCard from '../components/BookCard'
 import BookCardSkeleton from '../components/BookCardSkeleton'
 import SearchBar from '../components/SearchBar'
 
-const GENRES = ['All', 'Technology', 'Fiction', 'Classic', 'Sci-Fi', 'Fantasy', 'Self-Help', 'Dystopian']
-
 export default function BookListPage() {
-  const [books, setBooks] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [search, setSearch] = useState('')
-  const [genre, setGenre] = useState('All')
+  const [books, setBooks]           = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState(null)
+  const [search, setSearch]         = useState('')
+  const [genre, setGenre]           = useState('All')
   const [availableOnly, setAvailableOnly] = useState(false)
+  const [genres, setGenres]         = useState(['All'])
+
+  // Derive genre list dynamically from loaded books
+  useEffect(() => {
+    if (books.length === 0) return
+    const unique = ['All', ...new Set(books.map(b => b.genre).filter(Boolean).sort())]
+    setGenres(unique)
+  }, [books])
+
+  // Reset genre filter if selected genre disappears after a reload
+  useEffect(() => {
+    if (genre !== 'All' && !genres.includes(genre)) setGenre('All')
+  }, [genres, genre])
 
   const load = useCallback(() => {
     setLoading(true)
     setError(null)
     fetchBooks({
       search: search || undefined,
-      genre: genre !== 'All' ? genre : undefined,
       available: availableOnly ? true : undefined,
     })
       .then(setBooks)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [search, genre, availableOnly])
+  }, [search, availableOnly])
 
   useEffect(() => {
     const t = setTimeout(load, search ? 350 : 0)
     return () => clearTimeout(t)
   }, [load, search])
+
+  // Client-side genre filter so chips respond instantly without a round-trip
+  const displayed = genre === 'All' ? books : books.filter(b => b.genre === genre)
 
   return (
     <div className="page-container">
@@ -39,16 +51,16 @@ export default function BookListPage() {
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ fontWeight: 700, fontSize: 'var(--text-xl)', marginBottom: '0.25rem' }}>Book Catalogue</h1>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-          {loading ? 'Loading...' : `${books.length} book${books.length !== 1 ? 's' : ''} available`}
+          {loading ? 'Loading…' : `${displayed.length} book${displayed.length !== 1 ? 's' : ''}`}
         </p>
       </div>
 
       {/* Search */}
-      <SearchBar value={search} onChange={setSearch} placeholder="Search by title or author..." />
+      <SearchBar value={search} onChange={setSearch} placeholder="Search by title or author…" />
 
       {/* Genre filter chips */}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '1rem 0' }}>
-        {GENRES.map(g => (
+        {genres.map(g => (
           <button
             key={g}
             onClick={() => setGenre(g)}
@@ -67,7 +79,7 @@ export default function BookListPage() {
           </button>
         ))}
 
-        {/* Available toggle */}
+        {/* Available only toggle */}
         <button
           onClick={() => setAvailableOnly(v => !v)}
           style={{
@@ -93,7 +105,8 @@ export default function BookListPage() {
           borderRadius: 'var(--radius-md)', color: 'var(--color-error)',
           marginBottom: '1rem', fontSize: '0.875rem',
         }}>
-          {error} — <button onClick={load} style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Retry</button>
+          {error} —{' '}
+          <button onClick={load} style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Retry</button>
         </div>
       )}
 
@@ -105,8 +118,8 @@ export default function BookListPage() {
       }}>
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <BookCardSkeleton key={i} />)
-          : books.length > 0
-            ? books.map(book => <BookCard key={book.id} book={book} />)
+          : displayed.length > 0
+            ? displayed.map(book => <BookCard key={book.id} book={book} />)
             : (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔍</div>

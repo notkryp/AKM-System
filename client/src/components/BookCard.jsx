@@ -4,25 +4,26 @@ export default function BookCard({ book }) {
   const { id, title, author, genre, available } = book
 
   return (
-    <div style={{
-      background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: 'var(--radius-xl)',
-      padding: 'var(--space-5)',
-      display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
-      boxShadow: 'var(--shadow-sm)',
-      transition: 'box-shadow var(--transition), transform var(--transition)',
-    }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.transform = 'translateY(0)' }}
+    <div
+      style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-xl)',
+        padding: 'var(--space-5)',
+        display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
+        boxShadow: 'var(--shadow-sm)',
+        transition: 'box-shadow var(--transition-interactive), transform var(--transition-interactive)',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.transform = 'translateY(0)' }}
     >
-      {/* Top row: badge + genre */}
+      {/* Top row: availability badge + genre */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{
           fontSize: 'var(--text-xs)', fontWeight: 600,
           padding: '0.2rem 0.65rem',
           borderRadius: 'var(--radius-full)',
-          background: available ? 'var(--color-success-bg)' : 'var(--color-error-bg)',
+          background: available ? 'var(--color-success-highlight)' : 'var(--color-error-highlight)',
           color: available ? 'var(--color-success)' : 'var(--color-error)',
         }}>
           {available ? '● Available' : '● Reserved'}
@@ -62,26 +63,38 @@ export default function BookCard({ book }) {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'auto' }}>
-        <Link to={`/books/${id}`} style={{
-          flex: 1, textAlign: 'center',
-          padding: 'var(--space-2) var(--space-3)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)',
-          fontSize: 'var(--text-sm)',
-          color: 'var(--color-text)',
-          transition: 'background var(--transition)',
-        }}>Details</Link>
-        {available ? (
-          <Link to={`/books/${id}/reserve`} style={{
+        <Link
+          to={`/books/${id}`}
+          style={{
             flex: 1, textAlign: 'center',
             padding: 'var(--space-2) var(--space-3)',
-            background: 'var(--color-primary)',
-            color: '#fff',
+            border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-md)',
             fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-            transition: 'background var(--transition)',
-          }}>Reserve</Link>
+            color: 'var(--color-text)',
+            textDecoration: 'none',
+            transition: 'background var(--transition-interactive)',
+          }}
+        >
+          Details
+        </Link>
+        {available ? (
+          <Link
+            to={`/books/${id}/reserve`}
+            style={{
+              flex: 1, textAlign: 'center',
+              padding: 'var(--space-2) var(--space-3)',
+              background: 'var(--color-primary)',
+              color: '#fff',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 500,
+              textDecoration: 'none',
+              transition: 'background var(--transition-interactive)',
+            }}
+          >
+            Reserve
+          </Link>
         ) : (
           <span style={{
             flex: 1, textAlign: 'center',
@@ -90,7 +103,10 @@ export default function BookCard({ book }) {
             color: 'var(--color-text-faint)',
             borderRadius: 'var(--radius-md)',
             fontSize: 'var(--text-sm)',
-          }}>Unavailable</span>
+            cursor: 'not-allowed',
+          }}>
+            Unavailable
+          </span>
         )}
       </div>
     </div>
