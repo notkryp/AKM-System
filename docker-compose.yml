@@ -1,4 +1,15 @@
-version: '3.8'
+# AKM Book Reservation — Local Development Stack
+# Author: Kritik (KRIITIIK) — DevOps
+#
+# Usage:
+#   cp .env.example .env        # fill in your Supabase keys
+#   docker compose up --build
+#
+# Services:
+#   - server  : Express API on :5000
+#   - client  : Vite dev server on :5173
+
+version: '3.9'
 
 services:
   server:
@@ -6,14 +17,16 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - '5000:5000'
+    env_file: .env
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - PORT=5000
+      - NODE_ENV=development
+    volumes:
+      - ./server:/app
+      - /app/node_modules
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:5000/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -21,9 +34,13 @@ services:
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
-      - "3000:80"
+      - '5173:5173'
+    env_file: .env
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     depends_on:
       - server
     restart: unless-stopped

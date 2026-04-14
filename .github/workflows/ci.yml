@@ -2,58 +2,80 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, 'feature/**']
   pull_request:
     branches: [main]
 
 jobs:
-  lint-and-build-client:
-    name: Lint & Build Client
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
-    env:
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install client dependencies
-        run: npm install
-
-      - name: Lint client
-        run: npm run lint
-
-      - name: Build client
-        run: npm run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: client-dist
-          path: client/dist
-          retention-days: 7
-
-  lint-server:
-    name: Lint Server
+  # ──────────────────── Backend ────────────────────
+  backend:
+    name: Backend — lint, test, build
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: server
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
 
-      - name: Install server dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Lint server
-        run: npm run lint
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Build check
+        run: node -e "require('.')"
+
+  # ──────────────────── Frontend ───────────────────
+  frontend:
+    name: Frontend — lint, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: client/dist
+          retention-days: 3
