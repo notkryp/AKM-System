@@ -2,15 +2,22 @@ import { Link } from 'react-router-dom'
 
 export default function NotFoundPage() {
   return (
-    <div style={{ textAlign: 'center', padding: '6rem 1rem' }}>
-      <h1 style={{ fontSize: '4rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>404</h1>
-      <p style={{ fontSize: '1.25rem', marginTop: '0.5rem' }}>Page not found</p>
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      minHeight: '60vh', textAlign: 'center', gap: 'var(--space-4)',
+    }}>
+      <p style={{ fontSize: 'clamp(4rem,12vw,8rem)', fontWeight: 800, color: 'var(--color-surface-offset)', lineHeight: 1 }}>404</p>
+      <h1 style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--font-display)', fontWeight: 400 }}>Page not found</h1>
+      <p style={{ color: 'var(--color-text-muted)', maxWidth: '40ch', fontSize: 'var(--text-sm)' }}>
+        The page you're looking for doesn't exist or has been moved.
+      </p>
       <Link to="/" style={{
-        display: 'inline-block', marginTop: '1.5rem',
-        padding: '0.625rem 1.5rem',
+        marginTop: 'var(--space-2)',
         background: 'var(--color-primary)', color: '#fff',
-        borderRadius: 'var(--radius-md)', fontWeight: 600
-      }}>Go Home</Link>
+        padding: 'var(--space-3) var(--space-6)',
+        borderRadius: 'var(--radius-lg)', fontWeight: 500,
+        fontSize: 'var(--text-sm)',
+      }}>← Back to books</Link>
     </div>
   )
 }
