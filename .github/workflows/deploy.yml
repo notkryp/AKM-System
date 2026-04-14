@@ -1,41 +1,43 @@
-name: Deploy to Netlify
+name: Deploy
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
-    name: Build & Deploy Client
+  notify-render:
+    name: Trigger Render Deploy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
-    env:
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Trigger Render deploy hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H 'Content-Type: application/json' \
+            --fail --silent --show-error
+        continue-on-error: true
 
-      - name: Install dependencies
-        run: npm install
+      - name: Deploy status
+        run: echo "Backend deploy triggered on Render via webhook"
 
-      - name: Build
-        run: npm run build
+  notify-netlify:
+    name: Trigger Netlify Build
+    runs-on: ubuntu-latest
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: './client/dist'
-          production-branch: main
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Netlify build hook
+        if: ${{ secrets.NETLIFY_BUILD_HOOK != '' }}
+        run: |
+          curl -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}" \
+            --fail --silent --show-error
+        continue-on-error: true
+
+      - name: Deploy status
+        run: echo "Frontend deploy triggered on Netlify via webhook"

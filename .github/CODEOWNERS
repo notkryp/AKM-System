@@ -1,0 +1,13 @@
+# DevOps files — Kritik owns these
+.github/workflows/     @KRIITIIK
+docker-compose.yml     @KRIITIIK
+server/Dockerfile      @KRIITIIK
+
+# Backend — Mahmoud owns these
+server/controllers/    @MaelsCoding
+server/routes/         @MaelsCoding
+server/middleware/     @MaelsCoding
+server/tests/          @MaelsCoding
+
+# Frontend — Abhishek owns these
+client/src/            @notkryp
