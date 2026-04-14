@@ -4,29 +4,20 @@ import {
   getMyReservations,
   deleteReservation,
   getAllReservations,
+  returnReservation,
 } from '../controllers/reservations.js'
-import { requireAuth, requireAdmin, optionalAuth } from '../middleware/auth.js'
-import { validate, validateEmail, validateDate } from '../middleware/validate.js'
+import { requireAuth } from '../middleware/requireAuth.js'
+import { requireAdmin } from '../middleware/requireAuth.js'
 
 const router = Router()
 
-// Create reservation — auth optional (guests can reserve too)
-router.post(
-  '/',
-  optionalAuth,
-  validate(['bookId', 'name', 'email', 'pickupDate']),
-  validateEmail,
-  validateDate,
-  createReservation
-)
+// Protected — authenticated users
+router.post('/',              requireAuth, createReservation)
+router.get('/my',             requireAuth, getMyReservations)
+router.delete('/:id',         requireAuth, deleteReservation)
 
-// My reservations — must be logged in
-router.get('/my', requireAuth, getMyReservations)
-
-// Cancel reservation — must be logged in + own it
-router.delete('/:id', requireAuth, deleteReservation)
-
-// Admin — all reservations
-router.get('/admin', requireAuth, requireAdmin, getAllReservations)
+// Admin only
+router.get('/',               requireAuth, requireAdmin, getAllReservations)
+router.patch('/:id/return',   requireAuth, requireAdmin, returnReservation)
 
 export default router
