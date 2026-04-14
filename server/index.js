@@ -21,7 +21,8 @@ app.use(cors({
   credentials: true,
 }))
 
-app.use(express.json())
+// Parse JSON bodies — type '*/*' catches any Content-Type so body is never silently dropped
+app.use(express.json({ type: '*/*' }))
 app.use(express.urlencoded({ extended: true }))
 
 // Health check
