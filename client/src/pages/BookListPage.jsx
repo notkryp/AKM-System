@@ -1,100 +1,121 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { fetchBooks } from '../lib/api'
 import BookCard from '../components/BookCard'
 import BookCardSkeleton from '../components/BookCardSkeleton'
 import SearchBar from '../components/SearchBar'
 
-const GRID = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-  gap: 'var(--space-5)',
-}
+const GENRES = ['All', 'Technology', 'Fiction', 'Classic', 'Sci-Fi', 'Fantasy', 'Self-Help', 'Dystopian']
 
 export default function BookListPage() {
   const [books, setBooks] = useState([])
-  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [search, setSearch] = useState('')
+  const [genre, setGenre] = useState('All')
+  const [availableOnly, setAvailableOnly] = useState(false)
 
-  useEffect(() => {
-    fetchBooks()
+  const load = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    fetchBooks({
+      search: search || undefined,
+      genre: genre !== 'All' ? genre : undefined,
+      available: availableOnly ? true : undefined,
+    })
       .then(setBooks)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [search, genre, availableOnly])
 
-  const filtered = books.filter(b =>
-    b.title?.toLowerCase().includes(query.toLowerCase()) ||
-    b.author?.toLowerCase().includes(query.toLowerCase())
-  )
+  useEffect(() => {
+    const t = setTimeout(load, search ? 350 : 0)
+    return () => clearTimeout(t)
+  }, [load, search])
 
   return (
-    <div>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ marginBottom: 'var(--space-6)' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 'var(--text-xl)', marginBottom: 'var(--space-1)' }}>
-          Browse Books
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
-          {loading ? 'Loading...' : `${books.length} books available`}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontWeight: 700, fontSize: 'var(--text-xl)', marginBottom: '0.25rem' }}>Book Catalogue</h1>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+          {loading ? 'Loading...' : `${books.length} book${books.length !== 1 ? 's' : ''} available`}
         </p>
-        <SearchBar value={query} onChange={setQuery} />
+      </div>
+
+      {/* Search */}
+      <SearchBar value={search} onChange={setSearch} placeholder="Search by title or author..." />
+
+      {/* Genre filter chips */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '1rem 0' }}>
+        {GENRES.map(g => (
+          <button
+            key={g}
+            onClick={() => setGenre(g)}
+            style={{
+              padding: '0.3rem 0.875rem',
+              borderRadius: 'var(--radius-full)',
+              border: `1px solid ${genre === g ? 'var(--color-primary)' : 'var(--color-border)'}`,
+              background: genre === g ? 'var(--color-primary)' : 'transparent',
+              color: genre === g ? '#fff' : 'var(--color-text-muted)',
+              fontSize: '0.8rem', fontWeight: genre === g ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all var(--transition-interactive)',
+            }}
+          >
+            {g}
+          </button>
+        ))}
+
+        {/* Available toggle */}
+        <button
+          onClick={() => setAvailableOnly(v => !v)}
+          style={{
+            padding: '0.3rem 0.875rem',
+            borderRadius: 'var(--radius-full)',
+            border: `1px solid ${availableOnly ? 'var(--color-success)' : 'var(--color-border)'}`,
+            background: availableOnly ? 'var(--color-success)' : 'transparent',
+            color: availableOnly ? '#fff' : 'var(--color-text-muted)',
+            fontSize: '0.8rem', fontWeight: availableOnly ? 600 : 400,
+            cursor: 'pointer',
+            transition: 'all var(--transition-interactive)',
+            marginLeft: 'auto',
+          }}
+        >
+          {availableOnly ? '✓ Available only' : 'Available only'}
+        </button>
       </div>
 
       {/* Error */}
       {error && (
         <div style={{
-          padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)',
-          background: 'var(--color-error-bg)', color: 'var(--color-error)',
-          border: '1px solid var(--color-error)',
-          marginBottom: 'var(--space-6)', fontSize: 'var(--text-sm)',
+          padding: '1rem', background: 'var(--color-error-highlight)',
+          borderRadius: 'var(--radius-md)', color: 'var(--color-error)',
+          marginBottom: '1rem', fontSize: '0.875rem',
         }}>
-          ⚠️ Failed to load books: {error}. Is the backend running?
-        </div>
-      )}
-
-      {/* Skeletons */}
-      {loading && (
-        <div style={GRID}>
-          {Array.from({ length: 8 }).map((_, i) => <BookCardSkeleton key={i} />)}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !error && filtered.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: 'var(--space-16) var(--space-8)',
-          color: 'var(--color-text-muted)',
-        }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"
-            style={{ margin: '0 auto var(--space-4)', color: 'var(--color-text-faint)' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <p style={{ fontWeight: 600, marginBottom: 'var(--space-2)', color: 'var(--color-text)' }}>
-            No books found for "{query}"
-          </p>
-          <p style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>Try a different search term</p>
-          <button
-            onClick={() => setQuery('')}
-            style={{
-              color: 'var(--color-primary)', fontSize: 'var(--text-sm)',
-              border: '1px solid var(--color-primary)',
-              padding: 'var(--space-2) var(--space-4)',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-            }}
-          >
-            Clear search
-          </button>
+          {error} — <button onClick={load} style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Retry</button>
         </div>
       )}
 
       {/* Grid */}
-      {!loading && !error && filtered.length > 0 && (
-        <div style={GRID}>
-          {filtered.map(book => <BookCard key={book.id} book={book} />)}
-        </div>
-      )}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
+        gap: '1.25rem',
+      }}>
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => <BookCardSkeleton key={i} />)
+          : books.length > 0
+            ? books.map(book => <BookCard key={book.id} book={book} />)
+            : (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔍</div>
+                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>No books found</p>
+                <p style={{ fontSize: '0.875rem' }}>Try a different search or genre</p>
+              </div>
+            )
+        }
+      </div>
     </div>
   )
 }
