@@ -138,20 +138,20 @@ jobs:
 
       - name: Start dev server
         working-directory: client
-        run: npm run dev &
+        run: npm run dev -- --host &
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Wait for dev server
-        run: npx wait-on http://localhost:5173 --timeout 60000
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Run E2E tests
         run: npx playwright test --config=e2e/playwright.config.js
         continue-on-error: true
         env:
-          BASE_URL: http://localhost:5173
+          BASE_URL: http://localhost:3000
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASS: ${{ secrets.E2E_PASS }}
 
